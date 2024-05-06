@@ -1,0 +1,71 @@
+---
+- name: deploy VM
+  hosts: localhost
+  vars_files: vars.yml
+  become: false
+  gather_facts: false
+  tasks:
+  - name: deploy websever
+    local_action:
+      module: vmware_guest
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: False
+      datacenter: Datacenter
+      datastore: datastore_6TB
+      folder: otus_network
+      template: t_centos8
+      name: web-server
+      networks:
+        - name: VMs11
+          ip: 10.100.11.123
+          netmask: 255.255.255.0
+          gateway: 10.100.11.254
+      customization:
+        hostname: web-server
+        dns_servers: [8.8.8.8]
+      state: powered-on
+      wait_for_ip_address: true
+    delegate_to: localhost
+  tags: deploy
+    
+- name: copy files
+  hosts: web-server
+  vars_files: vars.yml
+  become: true
+  gather_facts: false
+  tasks:
+  - name: mkdir
+    shell: mkdir nginx-conf node python python/mysite
+
+  - name: loop copy files
+    copy:
+      src: "{{item.src}}"
+      dest: "{{item.dst}}"
+    with_items: "{{commands}}"  
+  tags: copy
+    
+- name: installs
+  hosts: web-server
+  become: true
+  gather_facts: false
+  tasks:
+  - name: install docker
+    shell: "{{item}}"
+    with_items:
+      - systemctl stop firewalld
+      - systemctl disable firewalld
+      - yum install -y yum-utils
+      - yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+      - yum install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+      - wget "https://github.com/docker/compose/releases/download/1.25.0/docker-compose-$(uname -s)-$(uname -m)"
+      - mv ./docker-compose-Linux-x86_64 /usr/local/bin/docker-compose
+      - chmod +x /usr/local/bin/docker-compose
+      
+      - systemctl start docker
+      - systemctl enable docker
+      - docker-compose up -d
+      
+  tags: install

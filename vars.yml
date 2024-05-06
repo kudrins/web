@@ -1,0 +1,17 @@
+---
+vcenter_hostname: 10.100.10.1
+vcenter_username: administrator@vsphere.local
+vcenter_password: password
+
+commands:
+  - { src: docker-compose.yml, dst: /root/docker-compose.yml } 
+  - { src: .env, dst: /root/.env }
+  - { src: nginx-conf/nginx.conf, dst: /root/nginx-conf/nginx.conf } 
+  - { src: node/test.js, dst: /root/node/test.js }
+  - { src: python/Dockerfile, dst: /root/python/Dockerfile } 
+  - { src: python/manage.py, dst: /root/python/manage.py }
+  - { src: python/requirements.txt, dst: /root/python/requirements.txt } 
+  - { src: python/mysite/settings.py, dst: /root/python/mysite/settings.py }
+  - { src: python/mysite/urls.py, dst: /root/python/mysite/urls.py } 
+  - { src: python/mysite/wsgi.py, dst: /root/python/mysite/wsgi.py }
+   
